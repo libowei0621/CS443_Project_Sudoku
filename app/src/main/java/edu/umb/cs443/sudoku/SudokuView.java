@@ -147,6 +147,17 @@ public class SudokuView extends View {
                     + 20, 9 * boxWidth + 20, linePaint);
         }
 
+        // draw init numbers
+        int[][] board = SudokuBoard.getBoard().getDefaultBoard();
+
+        for(int i = 0; i < 9; i++){
+            for(int j = 0; j < 9; j++){
+                if(board[i][j] != 0){
+                    canvas.drawText(Integer.toString(board[i][j] + 1), boxWidth * i + 20 + textX,
+                            boxWidth * j + 20 + boxWidth - textY, defaultNum);
+                }
+            }
+        }
     }
 
     private void drawChoiceNums(Canvas canvas) {
