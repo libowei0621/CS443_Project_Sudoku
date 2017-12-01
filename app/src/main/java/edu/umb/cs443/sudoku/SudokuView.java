@@ -5,7 +5,10 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
+
+import java.util.Set;
 
 /**
  * Created by Bowei on 2017/11/10.
@@ -16,8 +19,10 @@ public class SudokuView extends View {
     private int screenWidth;        //Screen's width
     private int boxWidth;           //Each box's width
 
-    private int[] falseChoice;      //List of number that cannot pick
-                                    //for current box
+    SudokuBoard board;              //Game board object
+
+    Set<Integer> faultNums;         //Set of numbers which cannot be pick for
+                                    //current position
 
     private Paint linePaint;        //Lines for drawing game map;
     private Paint defaultBox;       //Gray Box
@@ -28,6 +33,8 @@ public class SudokuView extends View {
 
     private float textX;            //X position for text in box
     private float textY;            //BaseLine offset for text in box
+
+    private int counter;            //For button click count;
 
     public SudokuView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
@@ -51,12 +58,7 @@ public class SudokuView extends View {
         textX = boxWidth / 2;
         textY = boxWidth / 4;
 
-        falseChoice = new int[9];
-
-        for(int i = 0; i < 9; i++)
-        {
-            falseChoice[i] = i;
-        }
+        board = SudokuBoard.getBoard();
 
         initPaint();
 
@@ -77,16 +79,16 @@ public class SudokuView extends View {
         clickBos.setColor(Color.GREEN);
         clickBos.setStyle(Paint.Style.FILL);
 
-        //Black number represent default numbers
+        //Dark Gray number represent default numbers
         defaultNum = new Paint();
-        defaultNum.setColor(Color.BLACK);
+        defaultNum.setColor(Color.DKGRAY);
         defaultNum.setTextSize(boxWidth * 0.65f);
         defaultNum.setTextAlign(Paint.Align.CENTER);
         defaultNum.setAntiAlias(true);
 
-        //Red number represent user input
+        //Black number represent user input
         userNum = new Paint();
-        userNum.setColor(Color.RED);
+        userNum.setColor(Color.BLACK);
         userNum.setTextSize(boxWidth * 0.65f);
         userNum.setTextAlign(Paint.Align.CENTER);
         userNum.setAntiAlias(true);
@@ -97,6 +99,8 @@ public class SudokuView extends View {
         pickNum.setTextSize(boxWidth * 0.65f + 15);
         pickNum.setTextAlign(Paint.Align.CENTER);
         pickNum.setAntiAlias(true);
+
+        counter = 0;
     }
 
     @Override
@@ -109,7 +113,7 @@ public class SudokuView extends View {
     protected void onDraw(Canvas canvas) {
         drawMap(canvas);
 
-        //TODO draw current map numbers
+        drawCurrentData(canvas);
 
         drawChoiceNums(canvas);
     }
@@ -148,12 +152,12 @@ public class SudokuView extends View {
         }
 
         // draw init numbers
-        int[][] board = SudokuBoard.getBoard().getDefaultBoard();
+        int[][] defaultBoard = board.getDefaultBoard();
 
         for(int i = 0; i < 9; i++){
             for(int j = 0; j < 9; j++){
-                if(board[i][j] != 0){
-                    canvas.drawText(Integer.toString(board[i][j] + 1), boxWidth * i + 20 + textX,
+                if(defaultBoard[i][j] != 0){
+                    canvas.drawText(Integer.toString(defaultBoard[i][j]), boxWidth * i + 20 + textX,
                             boxWidth * j + 20 + boxWidth - textY, defaultNum);
                 }
             }
@@ -165,12 +169,96 @@ public class SudokuView extends View {
         //offset for choice's position
         float startY = screenWidth + 10;
 
-        //TODO: draw numbers base on current box
+        //update fault numbers set
+        faultNums = board.getCurrFaultNums();
+
         for(int i = 0; i < 9; i++)
         {
-            canvas.drawText(Integer.toString(i+1), i * boxWidth + textX+ 20,
-                    startY + (boxWidth - textY), pickNum);
+            if(!faultNums.contains(i+1))
+                canvas.drawText(Integer.toString(i + 1), i * boxWidth + textX+ 20,
+                        startY + (boxWidth - textY), pickNum);
         }
     }
 
+    private void drawCurrentData(Canvas canvas){
+
+        // draw current position
+        canvas.drawRect(boxWidth * board.getCurrX() + 20, boxWidth * board.getCurrY() + 20,
+                boxWidth * board.getCurrX() + 20 + boxWidth, boxWidth * board.getCurrY()
+                        + 20 + boxWidth, clickBos);
+
+        // draw user data
+        int[][] defaultMap = board.getDefaultBoard();
+        int[][] currentMap = board.getCurrBoard();
+
+        for(int i = 0; i < 9; i++)
+            for(int j = 0; j < 9; j++)
+                if(defaultMap[i][j] == 0 && currentMap[i][j] != 0)
+                    canvas.drawText(Integer.toString(currentMap[i][j]), boxWidth * i + 20 + textX,
+                            boxWidth * j + 20 + boxWidth - textY, userNum);
+    }
+
+
+    @Override
+    public boolean onTouchEvent(MotionEvent event) {
+
+        // reset the cheat counter
+        counter = 0;
+
+        // if event is not click, ignore it
+        if(event.getAction() != MotionEvent.ACTION_DOWN)
+            return super.onTouchEvent(event);
+
+        // if click position out of game board, ignore it
+        if(event.getX() < 20 || event.getY() < 20 || event.getX() > screenWidth - 20)
+            return super.onTouchEvent(event);
+
+        // calculate click position
+        int x = (int)((event.getX() - 20) / boxWidth);
+        int y = (int)((event.getY() - 20) / boxWidth);
+
+        // if click on the game board
+        if(event.getY() < screenWidth - 20) {
+            if(board.isClickable(x, y))
+                board.setCurrPosition(x, y);
+        } else { // if click on the choices
+            if(x < 9 && !faultNums.contains(x + 1))
+                board.setCurrValue(x + 1);
+        }
+
+        // redraw the view
+        invalidate();
+
+        // if game is done, show the finish dialog
+        if(board.isFinish())
+            ((MainActivity) getContext()).showDialog();
+
+        return true;
+    }
+
+    // if user click restart button three times continuously,
+    // complete the whole map.
+    public void cheat(){
+        counter++;
+
+        if(counter > 2)
+        {
+            board.completeCurrMap();
+            counter = 0;
+        }
+
+        invalidate();
+    }
+
+    // reset current board to default board
+    public void cleanBoard(){
+        board.setToDefault();
+        invalidate();
+    }
+
+    // create a new game board for new game
+    public void newStart(){
+        board = board.newGame();
+        invalidate();
+    }
 }

@@ -1,6 +1,8 @@
 package edu.umb.cs443.sudoku;
 
+import java.util.HashSet;
 import java.util.Random;
+import java.util.Set;
 
 /**
  * Created by Bowei on 2017/11/26.
@@ -113,6 +115,8 @@ public class SudokuBoard {
      * @param y current y position value
      */
     public void setCurrPosition(int x, int y){
+        if(x < 0 || y < 0 || x > 9 || y > 9)
+            return;
         currX = x;
         currY = y;
     }
@@ -123,6 +127,8 @@ public class SudokuBoard {
      * @param value the number for current box
      */
     public void setCurrValue(int value){
+        if(currX == 10 || currY == 10)
+            return;
         currBoard[currX][currY] = value;
     }
 
@@ -153,5 +159,105 @@ public class SudokuBoard {
      */
     public int[][] getCurrBoard() {
         return currBoard;
+    }
+
+    /**
+     *  Get the set of numbers which cannot be pick for current position
+     *
+     * @return set of fault numbers
+     */
+    public Set<Integer> getCurrFaultNums(){
+        Set<Integer> faultNums = new HashSet<>();
+
+        if(currX == 10 || currY == 10)
+            return faultNums;
+
+        for(int i = 0; i < 9; i++) {
+            if (currBoard[currX][i] != 0)
+                faultNums.add(currBoard[currX][i]);
+
+            if (currBoard[i][currY] != 0)
+                faultNums.add(currBoard[i][currY]);
+        }
+
+        int x = currX/3 * 3;
+        int y = currY/3 * 3;
+
+        for(int i = x; i < x + 3; i++)
+            for(int j = y; j < y + 3; j++)
+                if(currBoard[i][j] != 0)
+                    faultNums.add(currBoard[i][j]);
+
+        return faultNums;
+    }
+
+    /**
+     * Check the game is finish or not.
+     * @return true if game is done, otherwise false;
+     */
+    public boolean isFinish(){
+        for(int i = 0; i < 9; i++)
+        {
+            HashSet<Integer> row = new HashSet<>();
+            HashSet<Integer> col = new HashSet<>();
+            HashSet<Integer> box = new HashSet<>();
+
+            for(int j = 0; j < 9; j++)
+            {
+                if(currBoard[i][j] == 0 || !row.add(currBoard[i][j]))
+                    return false;
+
+                if(currBoard[j][i] == 0 || !col.add(currBoard[j][i]))
+                    return false;
+
+                int RowIndex = 3*(i/3);
+                int ColIndex = 3*(i%3);
+
+                if(currBoard[RowIndex + j/3][ColIndex + j%3] == 0 ||
+                        !box.add(currBoard[RowIndex + j/3][ColIndex + j%3]))
+                    return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Helper function for cheating. It will solve the whole game except one box
+     */
+    public void completeCurrMap(){
+        for(int i = 0; i < 9; i++)
+            for(int j = 0; j < 9; j++)
+                currBoard[i][j] = fullBoard[i][j];
+
+        for(int i = 0; i < 9; i++)
+            for(int j = 0; j < 9; j++)
+                if(defaultBoard[i][j] == 0)
+                {
+                    currBoard[i][j] = 0;
+                    currX = i;
+                    currY = j;
+                    return;
+                }
+    }
+
+    /**
+     * Set current board to default board. Used for restart purpose
+     */
+    public void setToDefault(){
+        for(int i = 0; i < 9; i++)
+            for(int j = 0; j < 9; j++)
+                currBoard[i][j] = defaultBoard[i][j];
+
+        currX = currY = 10;
+    }
+
+    /**
+     * Reset the board instance. Used for new game purpose
+     * @return new game board
+     */
+    public SudokuBoard newGame(){
+        board = null;
+        return getBoard();
     }
 }
