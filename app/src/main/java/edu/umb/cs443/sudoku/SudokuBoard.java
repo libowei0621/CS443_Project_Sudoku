@@ -1,6 +1,7 @@
 package edu.umb.cs443.sudoku;
 
 import java.util.HashSet;
+import java.util.LinkedList;
 import java.util.Random;
 import java.util.Set;
 
@@ -24,17 +25,7 @@ public class SudokuBoard {
      * Singleton constructor
      */
     private SudokuBoard(){
-        fullBoard = new int[][]{
-                {4,3,8,7,9,6,2,1,5},
-                {6,5,9,1,3,2,4,7,8},
-                {2,7,1,4,5,8,6,9,3},
-                {8,4,5,2,1,9,3,6,7},
-                {7,1,3,5,6,4,8,2,9},
-                {9,2,6,8,7,3,1,5,4},
-                {1,9,4,3,2,5,7,8,6},
-                {3,6,2,9,8,7,5,4,1},
-                {5,8,7,6,4,1,9,3,2}
-        };
+        fullBoard = generator();
 
         initDefaultBoard();
         initCurrBoard();
@@ -65,7 +56,7 @@ public class SudokuBoard {
         Random rand = new Random();
         int count = 0;
 
-        while(count < 10)
+        while(count < 17)
         {
             int x = rand.nextInt(9);
             int y = rand.nextInt(9);
@@ -133,6 +124,15 @@ public class SudokuBoard {
     }
 
     /**
+     * Clean the value for current position
+     */
+    public void cleanCurrValue(){
+        if(currX == 10 || currY == 10)
+            return;
+        currBoard[currX][currY] = 0;
+    }
+
+    /**
      * To check is the input box available for user to change
      *
      * @param x x position
@@ -159,6 +159,21 @@ public class SudokuBoard {
      */
     public int[][] getCurrBoard() {
         return currBoard;
+    }
+
+    /**
+     * Set the current board
+     */
+    public void setCurrBoard(int[][] currBoard) {
+        this.currBoard = currBoard;
+        currX = currY = 10;
+    }
+
+    /**
+     * Set the default board
+     */
+    public void setDefaultBoard(int[][] defaultBoard) {
+        this.defaultBoard = defaultBoard;
     }
 
     /**
@@ -196,28 +211,11 @@ public class SudokuBoard {
      * @return true if game is done, otherwise false;
      */
     public boolean isFinish(){
+
         for(int i = 0; i < 9; i++)
-        {
-            HashSet<Integer> row = new HashSet<>();
-            HashSet<Integer> col = new HashSet<>();
-            HashSet<Integer> box = new HashSet<>();
-
             for(int j = 0; j < 9; j++)
-            {
-                if(currBoard[i][j] == 0 || !row.add(currBoard[i][j]))
+                if(currBoard[i][j] == 0)
                     return false;
-
-                if(currBoard[j][i] == 0 || !col.add(currBoard[j][i]))
-                    return false;
-
-                int RowIndex = 3*(i/3);
-                int ColIndex = 3*(i%3);
-
-                if(currBoard[RowIndex + j/3][ColIndex + j%3] == 0 ||
-                        !box.add(currBoard[RowIndex + j/3][ColIndex + j%3]))
-                    return false;
-            }
-        }
 
         return true;
     }
@@ -259,5 +257,65 @@ public class SudokuBoard {
     public SudokuBoard newGame(){
         board = null;
         return getBoard();
+    }
+
+    /***************************************************************************************
+     *
+     *                            Soduku Board generation algorithm
+     *
+     *      Because of time limitation, I only implement a algorithm to generate a valid sudoku
+     *      board. It is not a good sudoku board because it may have more than one solution.
+     *      I learn this algorithm online:
+     *
+     *      1. Fill the first row with nine different numbers.
+     *      2. Fill the second row which is a shift of the first line by three slots.
+     *      3. Fill the third row which is a shift of the second line by three slots.
+     *      4. Fill the fourth row which is a shift of the third by one slot.
+     *
+     *          line 1: 8 9 3  2 7 6  4 5 1
+     *          line 2: 2 7 6  4 5 1  8 9 3 (shift 3)
+     *          line 3: 4 5 1  8 9 3  2 7 6 (shift 3)
+     *
+     *          line 4: 5 1 8  9 3 2  7 6 4 (shift 1)
+     *          line 5: 9 3 2  7 6 4  5 1 8 (shift 3)
+     *          line 6: 7 6 4  5 1 8  9 3 2 (shift 3)
+     *
+     *          line 7: 6 4 5  1 8 9  3 2 7 (shift 1)
+     *          line 8: 1 8 9  3 2 7  6 4 5 (shift 3)
+     *          line 9: 3 2 7  6 4 5  1 8 9 (shift 3)
+     ***************************************************************************************/
+
+    private int[][] generator(){
+        int[][] result = new int[9][9];
+        LinkedList<Integer> nums = new LinkedList<>();
+        Random ran = new Random();
+
+        for(int i = 0; i < 9; i++)
+            nums.add(i+1);
+
+        for(int i = 0; i < 9; i++)
+        {
+            int index = ran.nextInt(nums.size());
+            result[0][i] = nums.remove(index);
+        }
+
+        for(int i = 1; i < 9; i++)
+        {
+            for(int j = 0; j < 9; j++)
+            {
+                if(i == 3 || i == 6)
+                {
+                    int shift = (j + 1) % 9;
+                    result[i][j] = result[i-1][shift];
+                }
+                else
+                {
+                    int shift = (j + 3) % 9;
+                    result[i][j] = result[i-1][shift];
+                }
+            }
+        }
+
+        return result;
     }
 }

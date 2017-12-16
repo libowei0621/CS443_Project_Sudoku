@@ -69,7 +69,7 @@ public class SudokuView extends View {
         linePaint = new Paint();
         linePaint.setColor(Color.BLACK);
         linePaint.setStyle(Paint.Style.STROKE);
-        linePaint.setStrokeWidth(3f);
+        linePaint.setStrokeWidth(5f);
 
         defaultBox = new Paint();
         defaultBox.setColor(Color.GRAY);
@@ -81,7 +81,7 @@ public class SudokuView extends View {
 
         //Dark Gray number represent default numbers
         defaultNum = new Paint();
-        defaultNum.setColor(Color.DKGRAY);
+        defaultNum.setColor(Color.BLUE);
         defaultNum.setTextSize(boxWidth * 0.65f);
         defaultNum.setTextAlign(Paint.Align.CENTER);
         defaultNum.setAntiAlias(true);
@@ -117,6 +117,12 @@ public class SudokuView extends View {
 
         drawChoiceNums(canvas);
     }
+
+    /***************************************************************************************
+     *
+     *                   Helper methods for drawing the game board
+     *
+     ***************************************************************************************/
 
     private void drawMap(Canvas canvas) {
 
@@ -198,6 +204,10 @@ public class SudokuView extends View {
                             boxWidth * j + 20 + boxWidth - textY, userNum);
     }
 
+    /***************************************************************************************
+     *                          End of helper methods part
+     ***************************************************************************************/
+
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
@@ -231,7 +241,7 @@ public class SudokuView extends View {
 
         // if game is done, show the finish dialog
         if(board.isFinish())
-            ((MainActivity) getContext()).showDialog();
+            ((MainActivity) getContext()).showFinishDialog();
 
         return true;
     }
