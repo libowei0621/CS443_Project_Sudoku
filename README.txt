@@ -1,0 +1,1 @@
+This application does not use any other libraries.
