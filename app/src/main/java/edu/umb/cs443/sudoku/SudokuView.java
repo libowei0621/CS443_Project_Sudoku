@@ -34,8 +34,6 @@ public class SudokuView extends View {
     private float textX;            //X position for text in box
     private float textY;            //BaseLine offset for text in box
 
-    private int counter;            //For button click count;
-
     public SudokuView(Context context, AttributeSet attrs, int defStyleAttr) {
         super(context, attrs, defStyleAttr);
         init();
@@ -99,8 +97,6 @@ public class SudokuView extends View {
         pickNum.setTextSize(boxWidth * 0.65f + 15);
         pickNum.setTextAlign(Paint.Align.CENTER);
         pickNum.setAntiAlias(true);
-
-        counter = 0;
     }
 
     @Override
@@ -212,9 +208,6 @@ public class SudokuView extends View {
     @Override
     public boolean onTouchEvent(MotionEvent event) {
 
-        // reset the cheat counter
-        counter = 0;
-
         // if event is not click, ignore it
         if(event.getAction() != MotionEvent.ACTION_DOWN)
             return super.onTouchEvent(event);
@@ -244,20 +237,6 @@ public class SudokuView extends View {
             ((MainActivity) getContext()).showFinishDialog();
 
         return true;
-    }
-
-    // if user click restart button three times continuously,
-    // complete the whole map.
-    public void cheat(){
-        counter++;
-
-        if(counter > 2)
-        {
-            board.completeCurrMap();
-            counter = 0;
-        }
-
-        invalidate();
     }
 
     // reset current board to default board

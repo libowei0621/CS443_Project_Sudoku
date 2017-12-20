@@ -221,25 +221,6 @@ public class SudokuBoard {
     }
 
     /**
-     * Helper function for cheating. It will solve the whole game except one box
-     */
-    public void completeCurrMap(){
-        for(int i = 0; i < 9; i++)
-            for(int j = 0; j < 9; j++)
-                currBoard[i][j] = fullBoard[i][j];
-
-        for(int i = 0; i < 9; i++)
-            for(int j = 0; j < 9; j++)
-                if(defaultBoard[i][j] == 0)
-                {
-                    currBoard[i][j] = 0;
-                    currX = i;
-                    currY = j;
-                    return;
-                }
-    }
-
-    /**
      * Set current board to default board. Used for restart purpose
      */
     public void setToDefault(){

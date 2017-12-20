@@ -66,7 +66,6 @@ public class MainActivity extends Activity {
 
     public void restartButton(View view){
         sudokuView.cleanBoard();
-        sudokuView.cheat();
     }
 
     public void showFinishDialog(){
